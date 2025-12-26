@@ -58,6 +58,9 @@ dev_dependencies:
   # Add these two below:
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.3.7
+  bloc_test: ^9.1.5    # Specialized library for testing BLoCs
+  mocktail: ^1.0.0     # Library to create fake objects (Mocking)
+  hive_test: ^1.0.1    # Optional, but helps with Hive, though we can use standard Hive too
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
