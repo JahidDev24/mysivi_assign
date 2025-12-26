@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mysivi/data/models/chat_history_item.dart';
+import 'package:mysivi/data/models/message_model.dart';
 import 'package:mysivi/presentation/screens/rootapp.dart';
 
 import 'core/app_theme.dart';
@@ -15,7 +16,11 @@ void main() async {
 
   // 2. Register Adapter
   Hive.registerAdapter(ChatHistoryItemAdapter());
+  Hive.registerAdapter(MessageAdapter());
+  Hive.registerAdapter(MessageTypeAdapter());
 
+  // We need a specific box for messages
+  await Hive.openBox<Message>('messages_box'); // Box to store all messages
   // 3. Open Boxes (One for Users, One for History)
   await Hive.openBox<String>('users_box');
   await Hive.openBox<ChatHistoryItem>('history_box');

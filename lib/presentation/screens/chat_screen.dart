@@ -24,7 +24,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ChatBloc(ChatRepository()),
+      create:
+          (context) =>
+              ChatBloc(ChatRepository())..add(ChatStarted(widget.userName)),
       child: Scaffold(
         appBar: AppBar(
           centerTitle: false,
@@ -82,26 +84,34 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: BlocBuilder<ChatBloc, ChatState>(
                 builder: (context, state) {
-                  if (state.messages.isEmpty) {
-                    return Center(
-                      child: Text(
-                        "Say hello to start chatting!",
-                        style: TextStyle(color: Colors.grey[400]),
-                      ),
-                    );
+                  // 1. Show Loading Spinner while opening Hive Box
+                  if (state.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
                   }
 
+                  // 2. Show Empty State
+                  if (state.messages.isEmpty) {
+                    return Center(
+                      child: Text("Say hello to ${widget.userName}!"),
+                    );
+                  }
+                  // 1. Reverse the list data so the Newest message is at Index 0
+                  final reversedMessages = state.messages.reversed.toList();
+                  // 3. Show List
                   return ListView.builder(
+                    reverse: true,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     itemCount: state.messages.length,
                     itemBuilder: (context, index) {
-                      final msg = state.messages[index];
+                      // 3. Use the reversed list
+                      final msg = reversedMessages[index];
                       final isMe = msg.type == MessageType.sender;
 
                       return MessageBubble(
                         text: msg.text,
                         isSender: isMe,
                         avatarChar: isMe ? "M" : widget.userName[0],
+                        timestamp: msg.timestamp,
                       );
                     },
                   );
@@ -150,10 +160,10 @@ class __MessageInputState extends State<_MessageInput> {
   void _send() {
     if (_controller.text.isNotEmpty) {
       context.read<ChatBloc>().add(SendMessage(_controller.text));
-      // 2. UPDATE HISTORY (Bonus Integration)
-      context.read<HistoryBloc>().add(
-        UpdateHistory(userName: widget.username, lastMessage: _controller.text),
-      );
+      // // 2. UPDATE HISTORY (Bonus Integration)
+      // context.read<HistoryBloc>().add(
+      //   UpdateHistory(userName: widget.username, lastMessage: _controller.text),
+      // );
 
       _controller.clear();
     }

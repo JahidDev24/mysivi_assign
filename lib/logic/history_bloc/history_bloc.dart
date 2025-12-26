@@ -8,34 +8,24 @@ part 'history_event.dart';
 part 'history_state.dart';
 
 class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
-  final Box<ChatHistoryItem> historyBox;
+  final Box<ChatHistoryItem> _historyBox = Hive.box<ChatHistoryItem>(
+    'history_box',
+  );
 
-  HistoryBloc()
-    : historyBox = Hive.box<ChatHistoryItem>('history_box'),
-      super(HistoryState([])) {
-    // Initial Load
+  HistoryBloc() : super(HistoryState([])) {
     on<LoadHistory>((event, emit) {
-      final items = historyBox.values.toList();
-      // Sort by newest first
+      final items = _historyBox.values.toList();
+      // Sort: Newest first
       items.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       emit(HistoryState(items));
     });
 
-    // Save/Update History
-    on<UpdateHistory>((event, emit) async {
-      final newItem = ChatHistoryItem(
-        userName: event.userName,
-        lastMessage: event.lastMessage,
-        timestamp: DateTime.now(),
-        unreadCount: 0, // Logic for unread count can be added here
-      );
+    // Load initially
+    add(LoadHistory());
 
-      // Save to Hive (using userName as key to update existing entries)
-      await historyBox.put(event.userName, newItem);
-
-      add(LoadHistory()); // Reload the list
+    // IMPORTANT: Listen to Hive changes automatically!
+    _historyBox.watch().listen((event) {
+      add(LoadHistory()); // Reload whenever the box changes
     });
-
-    add(LoadHistory()); // Load immediately on creation
   }
 }

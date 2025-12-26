@@ -123,26 +123,61 @@ class _ChatHistoryTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HistoryBloc, HistoryState>(
-      builder: (context, state) {
-        if (state.items.isEmpty) {
-          return const Center(child: Text("No chat history yet"));
-        }
+    // 1. WE MUST USE A BUILDER TO GET THE NESTED SCROLL VIEW CONTEXT
+    return Builder(
+      builder: (BuildContext context) {
+        return BlocBuilder<HistoryBloc, HistoryState>(
+          builder: (context, state) {
+            if (state.items.isEmpty) {
+              return const Center(
+                child: Text(
+                  "No chat history yet",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              );
+            }
 
-        return ListView.builder(
-          key: const PageStorageKey('history_list'),
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          itemCount: state.items.length,
-          itemBuilder: (context, index) {
-            final item = state.items[index];
+            return CustomScrollView(
+              key: const PageStorageKey('history_list'),
+              slivers: [
+                // 2. THIS IS THE FIX: IT PUSHES THE LIST DOWN
+                SliverOverlapInjector(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                    context,
+                  ),
+                ),
 
-            return HistoryTile(
-              userName: item.userName,
-              lastMessage: item.lastMessage,
-              // Format time: "10:30 AM" or "Yesterday"
-              time: DateFormat.jm().format(item.timestamp),
-              unreadCount: item.unreadCount,
-              index: index,
+                // 3. THE LIST
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = state.items[index];
+
+                      // 4. WRAP IN INKWELL/GESTURE DETECTOR FOR TAPPING
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to Chat Screen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => ChatScreen(userName: item.userName),
+                            ),
+                          );
+                        },
+                        child: HistoryTile(
+                          userName: item.userName,
+                          lastMessage: item.lastMessage,
+                          time: DateFormat.jm().format(item.timestamp),
+                          unreadCount: item.unreadCount,
+                          index: index,
+                        ),
+                      );
+                    }, childCount: state.items.length),
+                  ),
+                ),
+              ],
             );
           },
         );
